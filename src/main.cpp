@@ -1,22 +1,29 @@
 #include <raylib.h>
-#include <raymath.h>
 
 // variables
-const int screenWidth = 800;
-const int screenHeight = 600;
+constexpr int screenWidth = 800;
+constexpr int screenHeight = 600;
 bool gameOver = false;
 bool start = false;
 
-const int playerJump = -400;
-Vector2 playerPos = {75, screenHeight/2};
+constexpr int playerJump = -400;
+Vector2 playerPos = {75, screenHeight/2.0f};
 
-const double gravity = 1200;
-double velocity;
-const int maxFallSpeed = 900;
+int currentFrame = 0;
+float frameTimer = 0.0f;
+constexpr float frameSpeed = 0.12f;
+Rectangle frames[3] = {{0, 0, 17, 12},
+    { 28, 0, 17, 12},
+    { 56, 0, 17, 12 }
+};
+
+constexpr int gravity = 1200;
+float velocity;
+constexpr int maxFallSpeed = 900;
 
 
 // function
-void playerGravity(float dt) {
+void playerGravity(const float dt) {
     if (IsKeyPressed(KEY_SPACE)){
         velocity = playerJump;
         start = true;
@@ -28,22 +35,37 @@ void playerGravity(float dt) {
     }
 }
 
+void playerAnimation(const float dt) {
+    frameTimer += dt;
+    if (frameTimer >= frameSpeed) {
+        frameTimer = 0.0f;
+        currentFrame++;
+        if (currentFrame >= 3) {currentFrame = 0;}
+    }
+}
+
 // main window
 int main()
 {
     InitWindow(screenWidth, screenHeight, "flappy bird");
     SetTargetFPS(60);
 
+    const Texture player = LoadTexture("../assets/player.png");
+
     while (!WindowShouldClose()) {
-        float dt = GetFrameTime();
+        const float dt = GetFrameTime();
+        Rectangle playerDest = {playerPos.x, playerPos.y, 17*3, 12*3};
+
         if ((playerPos.y + 50) >= screenHeight) {gameOver = true;}
 
         if (!gameOver) {
             playerGravity(dt);
+            playerAnimation(dt);
 
             BeginDrawing();
             ClearBackground(RAYWHITE);
-            DrawRectangle(playerPos.x, playerPos.y, 50, 50, BLUE);
+            DrawTexturePro(player, frames[currentFrame], playerDest, {0,0}, 0, WHITE);
+
             EndDrawing();
         }
         else {
@@ -55,5 +77,6 @@ int main()
     }
 
     CloseWindow();
+    UnloadTexture(player);
     return 0;
 }
